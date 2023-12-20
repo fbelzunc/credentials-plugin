@@ -154,7 +154,7 @@ public abstract class CredentialsProvider extends Descriptor<CredentialsProvider
      * action, this permission allows the user to select a credential from those credentials available within the
      * scope of the job. Immediate actions could include: building with parameters, tagging a build,
      * deploying artifacts, etc.
-     *
+     * <p>
      * This permission is implied by {@link Job#CONFIGURE} as anyone who can configure the job can configure the
      * job to use credentials within the item scope anyway.
      *
@@ -217,16 +217,16 @@ public abstract class CredentialsProvider extends Descriptor<CredentialsProvider
      * The system property name corresponding to {@link #FINGERPRINT_ENABLED}.
      */
     private static final String FINGERPRINT_ENABLED_NAME = CredentialsProvider.class.getSimpleName() + ".fingerprintEnabled";
-    
+
     /**
-     * Control if the fingerprints must be used or not. 
+     * Control if the fingerprints must be used or not.
      * By default they are activated and thus allow the tracking of credentials usage.
      * In case of performance troubles in some weird situation, you can disable the behavior by setting it to {@code false}.
      */
     @SuppressFBWarnings(value = "MS_SHOULD_BE_FINAL", justification = "Accessible via System Groovy Scripts")
     @Restricted(NoExternalUse.class)
     /* package-protected */ static /* not final */ boolean FINGERPRINT_ENABLED = Boolean.parseBoolean(System.getProperty(FINGERPRINT_ENABLED_NAME, "true"));
-    
+
     /**
      * Default constructor.
      */
@@ -366,6 +366,23 @@ public abstract class CredentialsProvider extends Descriptor<CredentialsProvider
         return lookupCredentials(type, item, authentication, Collections.emptyList());
     }
 
+    @NonNull
+    @SuppressWarnings({"unchecked", "unused"}) // API entry point for consumers
+    public static <C extends Credentials> List<C> lookupCredentialsInItemGroup(@NonNull Class<C> type,
+                                                                               @Nullable ItemGroup itemGroup,
+                                                                               @Nullable Authentication authentication) {
+        return lookupCredentialsInItemGroup(type, itemGroup, authentication, List.of());
+    }
+
+    @NonNull
+    @SuppressWarnings({"unchecked", "unused"}) // API entry point for consumers
+    public static <C extends Credentials> List<C> lookupCredentialsInItemGroup(@NonNull Class<C> type,
+                                                                               @Nullable ItemGroup itemGroup,
+                                                                               @Nullable Authentication authentication,
+                                                                               @Nullable List<DomainRequirement> domainRequirements) {
+        return lookupCredentials(type, itemGroup, authentication, domainRequirements);
+    }
+
     /**
      * Returns all credentials which are available to the specified {@link Authentication}
      * for use by the {@link Item}s in the specified {@link ItemGroup}.
@@ -483,7 +500,7 @@ public abstract class CredentialsProvider extends Descriptor<CredentialsProvider
                 try {
                     for (ListBoxModel.Option option : provider.getCredentialIds(
                             type, itemGroup, authentication, domainRequirements, matcher)
-                            ) {
+                    ) {
                         if (ids.add(option.value)) {
                             result.add(option);
                         }
@@ -497,6 +514,24 @@ public abstract class CredentialsProvider extends Descriptor<CredentialsProvider
         result.sort(new ListBoxModelOptionComparator());
         return result;
     }
+
+    @NonNull
+    @SuppressWarnings("unused") // API entry point for consumers
+    public static <C extends Credentials> List<C> lookupCredentialsInItem(@NonNull Class<C> type,
+                                                                          @Nullable Item item,
+                                                                          @Nullable Authentication authentication) {
+        return lookupCredentialsInItem(type, item, authentication, List.of());
+    }
+
+    @NonNull
+    @SuppressWarnings("unused") // API entry point for consumers
+    public static <C extends Credentials> List<C> lookupCredentialsInItem(@NonNull Class<C> type,
+                                                                          @Nullable Item item,
+                                                                          @Nullable Authentication authentication,
+                                                                          @Nullable List<DomainRequirement>
+                                                                                  domainRequirements) {
+        return lookupCredentials(type, item, authentication, domainRequirements);
+}
 
     /**
      * Returns all credentials which are available to the specified {@link Authentication}
